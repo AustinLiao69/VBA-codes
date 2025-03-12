@@ -1,0 +1,83 @@
+Sub 批次插入Excel資料到Word_v1_3_7()
+    Dim xlApp As Object
+    Dim xlBook As Object
+    Dim xlSheet As Object
+    Dim wdApp As Object
+    Dim wdDoc As Object
+    Dim Excel檔案 As String
+    Dim 儲存路徑 As String
+    Dim 最後列 As Long
+    Dim i As Long
+    Dim A欄內容 As String, B欄內容 As String
+    
+    On Error GoTo ErrorHandler
+
+    Application.DisplayAlerts = False
+    
+    ' 使用 GetOpenFilename 來選擇 Excel 檔案
+    Excel檔案 = Application.GetOpenFilename("Excel 檔案 (*.xls; *.xlsx; *.xlsm), *.xls; *.xlsx; *.xlsm", , "請選擇 Excel 檔案")
+    
+    If Excel檔案 = "False" Then
+        MsgBox "未選擇 Excel 檔案，操作取消。", vbExclamation
+        Exit Sub
+    End If
+    
+    Set xlApp = CreateObject("Excel.Application")
+    xlApp.Visible = False
+    Set xlBook = xlApp.Workbooks.Open(Excel檔案)
+    Set xlSheet = xlBook.Sheets(1)
+
+    最後列 = xlSheet.Cells(xlSheet.Rows.Count, 1).End(-4162).Row
+
+    Set wdApp = CreateObject("Word.Application")
+    wdApp.Visible = True
+    Set wdDoc = wdApp.Documents.Add
+
+    For i = 1 To 最後列
+        A欄內容 = Trim(xlSheet.Cells(i, 1).Value)
+        B欄內容 = Trim(xlSheet.Cells(i, 2).Value)
+        
+        If A欄內容 <> "" Or B欄內容 <> "" Then
+            wdDoc.Content.InsertAfter A欄內容 & " " & B欄內容 & vbCrLf
+        End If
+    Next i
+
+    ' 使用 GetSaveAsFilename 來選擇儲存路徑
+    儲存路徑 = Application.GetSaveAsFilename(FileFilter:="Word 文件 (*.docx), *.docx", Title:="請選擇儲存位置")
+    
+    If 儲存路徑 = "False" Then
+        MsgBox "未選擇儲存位置，文件未儲存。", vbExclamation
+    Else
+        If Right(LCase(儲存路徑), 5) <> ".docx" Then 儲存路徑 = 儲存路徑 & ".docx"
+        wdDoc.SaveAs2 FileName:=儲存路徑, FileFormat:=16
+        MsgBox "文件已成功儲存：" & vbCrLf & 儲存路徑, vbInformation
+    End If
+    
+Cleanup:
+    wdDoc.Close False
+    wdApp.Quit
+    xlBook.Close False
+    xlApp.Quit
+    Set fd = Nothing
+    Set wdDoc = Nothing
+    Set wdApp = Nothing
+    Set xlSheet = Nothing
+    Set xlBook = Nothing
+    Set xlApp = Nothing
+    Application.DisplayAlerts = True
+    Exit Sub
+    
+ErrorHandler:
+    MsgBox "發生錯誤: " & Err.Description, vbCritical
+    On Error Resume Next
+    If Not wdDoc Is Nothing Then wdDoc.Close False
+    If Not wdApp Is Nothing Then wdApp.Quit
+    If Not xlApp Is Nothing Then xlApp.Quit
+    Set fd = Nothing
+    Set wdDoc = Nothing
+    Set wdApp = Nothing
+    Set xlSheet = Nothing
+    Set xlBook = Nothing
+    Set xlApp = Nothing
+    Application.DisplayAlerts = True
+End Sub
