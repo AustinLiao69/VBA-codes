@@ -1,0 +1,159 @@
+Sub 插入子項目_v1_1_12_Copilot()
+    Dim wordApp As Object
+    Dim wordDoc As Object
+    Dim excelApp As Object
+    Dim excelWb As Object
+    Dim excelWs As Object
+    Dim fd As FileDialog
+    Dim excelFile As String
+    Dim wordFile As String
+    Dim 測試機型Dict As Object
+    Dim rng As Object
+    Dim para As Object
+    Dim i As Integer
+    Dim colIndex As Integer
+    Dim lastRow As Long, lastCol As Long
+    Dim 測試機型 As Variant
+    Dim 測試機型List As Variant
+    
+    On Error GoTo ErrorHandler
+    
+    ' ========== 1. 讓使用者選擇 Excel 檔案 ==========
+    Set fd = Application.FileDialog(msoFileDialogFilePicker)
+    With fd
+        .Title = "選擇 Excel 檔案"
+        .Filters.Clear
+        .Filters.Add "Excel 文件", "*.xlsx; *.xlsm"
+        .AllowMultiSelect = False
+        If .Show <> -1 Then
+            MsgBox "未選擇 Excel 檔案，程序已取消。", vbInformation
+            GoTo CleanExit
+        End If
+        excelFile = .SelectedItems(1)
+    End With
+    Debug.Print "已選擇的 Excel 檔案: " & excelFile
+
+    ' 開啟 Excel 檔案（隱藏）
+    Set excelApp = CreateObject("Excel.Application")
+    excelApp.Visible = False
+    Set excelWb = excelApp.Workbooks.Open(excelFile)
+    Set excelWs = excelWb.Sheets(1)
+    Debug.Print "已打開 Excel 檔案"
+
+    ' 找到 "測試機型" 欄位
+    lastRow = excelWs.Cells(excelWs.Rows.Count, 1).End(xlUp).Row
+    lastCol = excelWs.Cells(1, excelWs.Columns.Count).End(xlToLeft).Column
+    colIndex = 0
+
+    ' 搜尋測試機型欄位的列號
+    For i = 1 To lastCol
+        If excelWs.Cells(1, i).Value = "測試機型" Then
+            colIndex = i
+            Exit For
+        End If
+    Next i
+    Debug.Print "測試機型欄位列號: " & colIndex
+
+    ' 若找不到該欄位，則結束
+    If colIndex = 0 Then
+        MsgBox "找不到 '測試機型' 欄位，請確認 Excel 檔案格式！", vbExclamation
+        GoTo CleanExit
+    End If
+
+    ' 使用 Dictionary 避免重複測試機型
+    Set 測試機型Dict = CreateObject("Scripting.Dictionary")
+
+    ' 擷取測試機型欄位的資料（排除標題行）
+    For i = 2 To lastRow
+        測試機型 = Trim(excelWs.Cells(i, colIndex).Value)
+        If 測試機型 <> "" And Not 測試機型Dict.Exists(測試機型) Then
+            測試機型Dict.Add 測試機型, "測試機型：" & 測試機型
+        End If
+    Next i
+    Debug.Print "測試機型總數: " & 測試機型Dict.Count
+
+    ' 檢查是否有測試機型資料
+    If 測試機型Dict.Count = 0 Then
+        MsgBox "沒有找到測試機型資料，請確認 Excel 檔案內容！", vbExclamation
+        GoTo CleanExit
+    End If
+
+    ' 建立測試機型清單
+    測試機型List = 測試機型Dict.Items
+
+    ' ========== 2. 讓使用者選擇 Word 檔案 ==========
+    Set fd = Application.FileDialog(msoFileDialogFilePicker)
+    With fd
+        .Title = "選擇 Word 檔案"
+        .Filters.Clear
+        .Filters.Add "Word 文件", "*.docx; *.doc"
+        .AllowMultiSelect = False
+        If .Show <> -1 Then
+            MsgBox "未選擇 Word 檔案，程序已取消。", vbInformation
+            GoTo CleanExit
+        End If
+        wordFile = .SelectedItems(1)
+    End With
+    Debug.Print "已選擇的 Word 檔案: " & wordFile
+
+    ' 啟動 Word 應用程式
+    Set wordApp = CreateObject("Word.Application")
+    wordApp.Visible = True
+    Set wordDoc = wordApp.Documents.Open(wordFile)
+    Debug.Print "已打開 Word 檔案"
+
+    ' 即時運算：顯示插入過程
+    Application.ScreenUpdating = False
+    Application.StatusBar = "正在插入測試機型..."
+
+    ' 遍歷所有段落，確保每個有效測試項目後都插入所有測試機型
+    For Each para In wordDoc.Paragraphs
+        Dim paraText As String
+        paraText = Trim(Replace(para.Range.Text, vbCr, "")) ' 去除換行符
+        Debug.Print "處理段落: " & paraText
+        
+        ' 確保每行都插入所有測試機型
+        If paraText <> "" And InStr(paraText, "測試機型：") = 0 Then
+            Set rng = para.Range
+            rng.Collapse wdCollapseEnd  ' 移至段落末尾
+            
+            ' 插入測試機型清單（確保格式正確）
+            For Each 測試機型 In 測試機型List
+                rng.InsertAfter 測試機型 & vbCrLf
+                Debug.Print "插入測試機型: " & 測試機型
+            Next 測試機型
+        End If
+    Next para
+
+    ' 恢復即時運算
+    Application.ScreenUpdating = True
+    Application.StatusBar = False
+
+    ' 儲存變更並顯示 Word 檔案
+    wordDoc.Save
+    wordDoc.Saved = True ' 確保關閉時不彈出詢問視窗
+    MsgBox "測試機型資料已成功插入並儲存。", vbInformation
+    wordApp.Visible = True
+
+CleanExit:
+    ' 釋放物件
+    On Error Resume Next
+    If Not excelWb Is Nothing Then excelWb.Close False
+    If Not excelApp Is Nothing Then excelApp.Quit
+    If Not wordDoc Is Nothing Then wordDoc.Close
+    If Not wordApp Is Nothing Then wordApp.Quit
+
+    Set 測試機型Dict = Nothing
+    Set excelWs = Nothing
+    Set excelWb = Nothing
+    Set excelApp = Nothing
+    Set rng = Nothing
+    Set wordDoc = Nothing
+    Set wordApp = Nothing
+    Set fd = Nothing
+    Exit Sub
+
+ErrorHandler:
+    MsgBox "執行過程中發生錯誤: " & Err.Description, vbCritical
+    Resume CleanExit
+End Sub
