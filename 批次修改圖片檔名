@@ -1,0 +1,103 @@
+Sub 批次修改圖片檔名_v1_4_5()
+    Dim fd As FileDialog
+    Dim 主資料夾 As String
+    Dim 子資料夾 As Object
+    Dim fso As Object
+    Dim 資料夾路徑 As String
+    Dim 檔案 As String
+    Dim 新檔名 As String
+    Dim 重新命名計數 As Long
+    Dim 資料夾堆疊 As Collection
+    Dim 檔案完整路徑 As String
+    Dim 檔案時間 As String
+    Dim 檔案副檔名 As String
+    Dim 圖片格式() As String
+    Dim 格式索引 As Integer
+    Dim 目前資料夾 As Object
+    Dim 序號 As Integer
+
+    ' 初始化 FileSystemObject
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set 資料夾堆疊 = New Collection
+    Set fd = Application.FileDialog(msoFileDialogFolderPicker)
+
+    On Error GoTo ErrorHandler
+
+    ' 讓使用者選取資料夾
+    With fd
+        .Title = "選擇要修改檔名的主資料夾"
+        .AllowMultiSelect = False
+        If .Show <> -1 Then
+            MsgBox "未選擇資料夾，操作取消。", vbExclamation
+            Exit Sub
+        End If
+        主資料夾 = .SelectedItems(1)
+    End With
+
+    ' 加入主資料夾
+    資料夾堆疊.Add 主資料夾
+
+    ' 定義支援的圖片格式
+    圖片格式 = Split("jpg,jpeg,png,bmp,gif,tiff,heic", ",")
+
+    重新命名計數 = 0
+
+    ' 處理所有資料夾
+    Do While 資料夾堆疊.Count > 0
+        資料夾路徑 = 資料夾堆疊(1)
+        資料夾堆疊.Remove 1
+
+        If fso.FolderExists(資料夾路徑) Then
+            Set 目前資料夾 = fso.GetFolder(資料夾路徑)
+
+            ' 加入子資料夾到堆疊
+            For Each 子資料夾 In 目前資料夾.SubFolders
+                資料夾堆疊.Add 子資料夾.Path
+            Next 子資料夾
+
+            ' 處理檔案
+            For 格式索引 = LBound(圖片格式) To UBound(圖片格式)
+                檔案 = Dir(資料夾路徑 & "\*." & 圖片格式(格式索引), vbNormal)
+                
+                Do While 檔案 <> ""
+                    檔案完整路徑 = 資料夾路徑 & "\" & 檔案
+
+                    If fso.FileExists(檔案完整路徑) Then
+                        ' 取得檔案時間
+                        檔案時間 = Format(fso.GetFile(檔案完整路徑).DateLastModified, "yyyymmdd_HHmmss")
+                        檔案副檔名 = "." & fso.GetExtensionName(檔案完整路徑)
+
+                        ' 設定新檔名
+                        新檔名 = 資料夾路徑 & "\" & 檔案時間 & 檔案副檔名
+
+                        ' 處理重複檔名
+                        序號 = 1
+                        Do While fso.FileExists(新檔名)
+                            新檔名 = 資料夾路徑 & "\" & 檔案時間 & "_" & Format(序號, "000") & 檔案副檔名
+                            序號 = 序號 + 1
+                        Loop
+
+                        ' 重新命名
+                        On Error Resume Next
+                        Name 檔案完整路徑 As 新檔名
+                        If Err.Number = 0 Then
+                            重新命名計數 = 重新命名計數 + 1
+                        End If
+                        On Error GoTo ErrorHandler
+                    End If
+
+                    ' 取得下一個符合條件的檔案
+                    檔案 = Dir()
+                Loop
+            Next 格式索引
+        End If
+    Loop
+
+    MsgBox "已成功重新命名 " & 重新命名計數 & " 個檔案", vbInformation
+    Exit Sub
+
+ErrorHandler:
+    MsgBox "發生錯誤: " & Err.Description & vbCrLf & _
+           "錯誤代碼: " & Err.Number & vbCrLf & _
+           "錯誤來源: " & Err.Source, vbCritical
+End Sub
