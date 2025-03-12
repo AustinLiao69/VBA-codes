@@ -1,0 +1,65 @@
+Sub 貼上圖片路徑予合併列印用_1_0_9()
+    Dim FolderPath As String
+    Dim NewWorkbook As Workbook
+    Dim NewSheet As Worksheet
+    Dim Column As Long
+    Dim Row As Long
+    Dim FileSystem As Object
+    Dim Folder As Object
+    Dim File As Object
+    
+    ' 新建一個Excel工作表
+    Set NewWorkbook = Workbooks.Add
+    Set NewSheet = NewWorkbook.Sheets(1)
+    
+    ' 初始化FileSystem物件
+    Set FileSystem = CreateObject("Scripting.FileSystemObject")
+    
+    ' 選取多個資料夾
+    Do
+        With Application.FileDialog(msoFileDialogFolderPicker)
+            .Title = "選擇資料夾（取消以結束選擇）"
+            .Show
+            If .SelectedItems.Count = 0 Then Exit Do
+            FolderPath = .SelectedItems(1)
+        End With
+        
+        ' 將資料夾名稱寫到欄的第一列
+        Column = NewSheet.Cells(1, Columns.Count).End(xlToLeft).Column + 1
+        If Column = 1 Then Column = 1 ' 首次選取的資料夾放在第一欄
+        Dim FolderName As String
+        FolderName = FileSystem.GetFolder(FolderPath).Name
+        NewSheet.Cells(1, Column).Value = FolderName
+        
+        ' 遍歷資料夾內所有圖片
+        Set Folder = FileSystem.GetFolder(FolderPath)
+        Row = 2 ' 從第二行開始貼路徑
+        
+        For Each File In Folder.Files
+            If LCase(Right(File.Name, 4)) = ".jpg" Or _
+               LCase(Right(File.Name, 5)) = ".jpeg" Or _
+               LCase(Right(File.Name, 4)) = ".png" Or _
+               LCase(Right(File.Name, 4)) = ".gif" Or _
+               LCase(Right(File.Name, 4)) = ".bmp" Then
+                Dim FilePath As String
+                FilePath = File.Path
+                ' 將路徑中的\替換為\\
+                FilePath = Replace(FilePath, "\", "\\")
+                ' 將路徑加上雙引號
+                FilePath = """" & FilePath & """"
+                ' 將路徑貼到新的Excel
+                NewSheet.Cells(Row, Column).Value = FilePath
+                Row = Row + 1
+            End If
+        Next File
+    Loop
+    
+    ' 調試訊息
+    MsgBox "完成！所有圖片路徑已貼上。"
+
+    ' 不自動關閉Excel
+    Set NewSheet = Nothing
+    Set NewWorkbook = Nothing
+    Set Folder = Nothing
+    Set FileSystem = Nothing
+End Sub
