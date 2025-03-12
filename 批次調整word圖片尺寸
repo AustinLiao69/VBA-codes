@@ -1,0 +1,96 @@
+Sub 批次調整word圖片尺寸_1_0_4()
+    '版本：1.0.4
+    '功能：選擇Word檔案並批次調整所有圖片
+    '日期：2025-02-24
+    
+    Dim objWord As Object
+    Dim objDoc As Object
+    Dim shp As Object
+    Dim userWidth As Single
+    Dim userHeight As Single
+    Dim filePath As String
+    Dim fd As Object
+    Dim picCount As Integer
+    
+    On Error Resume Next
+    
+    '建立檔案選擇對話方塊
+    Set fd = Application.FileDialog(msoFileDialogFilePicker)
+    
+    With fd
+        .Title = "請選擇要處理的Word檔案"
+        .Filters.Clear
+        .Filters.Add "Word檔案", "*.doc;*.docx"
+        .AllowMultiSelect = False
+        
+        If .Show = -1 Then
+            filePath = .SelectedItems(1)
+        Else
+            MsgBox "未選擇檔案！", vbExclamation
+            Exit Sub
+        End If
+    End With
+    
+    '獲取或創建Word應用程序
+    Set objWord = GetObject(, "Word.Application")
+    If Err.Number <> 0 Then
+        Set objWord = CreateObject("Word.Application")
+    End If
+    Err.Clear
+    
+    '開啟選擇的文檔
+    Set objDoc = objWord.Documents.Open(filePath)
+    objWord.Visible = True
+    
+    '使用InputBox獲取用戶輸入的尺寸
+    userWidth = Val(InputBox("請輸入圖片寬度（公分）：", "設置圖片寬度"))
+    If userWidth <= 0 Then
+        MsgBox "請輸入有效的寬度！", vbExclamation
+        Exit Sub
+    End If
+    
+    userHeight = Val(InputBox("請輸入圖片高度（公分）：", "設置圖片高度"))
+    If userHeight <= 0 Then
+        MsgBox "請輸入有效的高度！", vbExclamation
+        Exit Sub
+    End If
+    
+    '轉換公分為磅
+    userWidth = userWidth * 28.35
+    userHeight = userHeight * 28.35
+    
+    picCount = 0
+    '遍歷所有圖片並調整尺寸
+    For Each shp In objDoc.InlineShapes
+        On Error Resume Next
+        shp.Width = userWidth
+        shp.Height = userHeight
+        If Err.Number = 0 Then
+            picCount = picCount + 1
+        End If
+        Err.Clear
+    Next shp
+    
+    For Each shp In objDoc.Shapes
+        On Error Resume Next
+        shp.Width = userWidth
+        shp.Height = userHeight
+        If Err.Number = 0 Then
+            picCount = picCount + 1
+        End If
+        Err.Clear
+    Next shp
+    
+    '完成提示
+    If picCount > 0 Then
+        MsgBox "已完成調整 " & picCount & " 個圖片的尺寸！", vbInformation
+    Else
+        MsgBox "未找到可調整的圖片！", vbExclamation
+    End If
+    
+    '清理對象
+    Set shp = Nothing
+    Set objDoc = Nothing
+    Set objWord = Nothing
+    Set fd = Nothing
+End Sub
