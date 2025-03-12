@@ -1,0 +1,144 @@
+Sub 插入對應資料夾的圖片_1_2_9_Claude()
+    Dim folderPath As String
+    Dim folderName As String
+    Dim wordDocPath As String
+    Dim wordApp As Object
+    Dim wordDoc As Object
+    Dim wordRange As Object
+    Dim shapeRange As Object
+    Dim file As String
+    Dim insertedImageCount As Integer
+    Dim imgList() As String
+    Dim fileDict As Object
+    Dim tempFile As Variant
+    Dim i As Integer
+
+    insertedImageCount = 0
+    Set fileDict = CreateObject("Scripting.Dictionary")
+
+    ' 選取資料夾
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        .Title = "選取資料夾"
+        If .Show = -1 Then
+            folderPath = .SelectedItems(1)
+            folderName = Mid(folderPath, InStrRev(folderPath, "\") + 1)
+        Else
+            MsgBox "您未選取任何資料夾。"
+            Exit Sub
+        End If
+    End With
+
+    ' 選取 Word 檔案
+    With Application.FileDialog(msoFileDialogFilePicker)
+        .Title = "選取 Word 檔案"
+        .Filters.Clear
+        .Filters.Add "Word Files", "*.docx; *.doc"
+        If .Show = -1 Then
+            wordDocPath = .SelectedItems(1)
+        Else
+            MsgBox "您未選取任何 Word 檔案。"
+            Exit Sub
+        End If
+    End With
+
+    ' 讀取資料夾內的圖片，建立排序清單
+    file = Dir(folderPath & "\*.*")
+    Do While file <> ""
+        If LCase(Right(file, 4)) = ".jpg" Or LCase(Right(file, 4)) = ".png" Or LCase(Right(file, 4)) = ".gif" Then
+            fileDict.Add folderPath & "\" & file, FileDateTime(folderPath & "\" & file)
+        End If
+        file = Dir
+    Loop
+
+    ' 若無圖片則退出
+    If fileDict.Count = 0 Then
+        MsgBox "選取的資料夾內沒有圖片，請重新選擇。"
+        Exit Sub
+    End If
+
+    ' 依時間排序圖片
+    ReDim imgList(fileDict.Count - 1)
+    i = 0
+    For Each tempFile In fileDict.Keys
+        imgList(i) = tempFile
+        i = i + 1
+    Next
+    QuickSort imgList, fileDict, 0, UBound(imgList)
+
+    ' 打開 Word 應用程式和文件
+    On Error Resume Next
+    Set wordApp = CreateObject("Word.Application")
+    Set wordDoc = wordApp.Documents.Open(wordDocPath)
+    On Error GoTo 0
+
+    If wordDoc Is Nothing Then
+        MsgBox "無法打開 Word 文件。"
+        Exit Sub
+    End If
+
+    wordApp.Visible = True
+
+    ' 搜索 Word 文件中的資料夾名稱，並插入圖片
+    Set wordRange = wordDoc.Content
+    i = 0
+    Do While wordRange.Find.Execute(FindText:=folderName, Forward:=True, MatchCase:=True, MatchWholeWord:=False)
+        If i > UBound(imgList) Then Exit Do
+
+        wordRange.Collapse Direction:=wdCollapseEnd ' 移動到匹配字串的結尾
+        wordRange.InsertParagraphAfter
+        wordRange.Collapse Direction:=wdCollapseEnd ' 確保游標位置正確後移動
+
+        ' 插入圖片
+        Set shapeRange = wordRange.Paragraphs.First.Range
+        shapeRange.InlineShapes.AddPicture FileName:=imgList(i), LinkToFile:=False, SaveWithDocument:=True
+        insertedImageCount = insertedImageCount + 1
+        i = i + 1
+
+        wordRange.Collapse Direction:=wdCollapseEnd ' 繼續搜尋下一個匹配
+    Loop
+
+    ' 保存並關閉 Word
+    wordDoc.Save
+    wordDoc.Close
+    wordApp.Quit
+
+    ' 顯示結果
+    If insertedImageCount > 0 Then
+        MsgBox "圖片插入完成，總共插入了 " & insertedImageCount & " 張圖片。"
+    Else
+        MsgBox "未找到任何符合條件的位置可插入圖片。"
+    End If
+    ' 4120 已修正
+End Sub
+
+' QuickSort 函數 - 根據建立時間排序圖片
+Sub QuickSort(arr As Variant, dict As Object, low As Integer, high As Integer)
+    Dim pivot As Variant
+    Dim i As Integer, j As Integer
+    Dim temp As Variant
+
+    If low < high Then
+        pivot = dict(arr((low + high) \ 2))
+        i = low
+        j = high
+
+        Do While i <= j
+            Do While dict(arr(i)) < pivot
+                i = i + 1
+            Loop
+            Do While dict(arr(j)) > pivot
+                j = j - 1
+            Loop
+            If i <= j Then
+                temp = arr(i)
+                arr(i) = arr(j)
+                arr(j) = temp
+                i = i + 1
+                j = j - 1
+            End If
+        Loop
+
+        QuickSort arr, dict, low, j
+        QuickSort arr, dict, i, high
+    End If
+End Sub
