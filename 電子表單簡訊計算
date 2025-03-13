@@ -120,10 +120,7 @@ Sub 第二步插入欄位並下移儲存格()
         ws.Cells(1, 12).Value = "點數" ' L欄
         ws.Cells(1, 13).Value = "字數" ' M欄
         ws.Cells(1, 14).Value = "簡訊內容" ' N欄
-        
-        
-        
-            
+
             ' 保存並關閉工作簿
             wb.Save
         Next i
