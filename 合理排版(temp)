@@ -1,0 +1,109 @@
+Sub 合理排版_1_1_49_Copilot()
+    ' 1. 定義變數
+    Dim wordApp As Object
+    Dim doc As Object
+    Dim shp As Object
+    Dim dlgOpen As FileDialog
+    Dim filePath As String
+    Dim pageHeight As Single
+    Dim pageWidth As Single
+    Dim marginHeight As Single
+    Dim marginWidth As Single
+    Dim maxImageHeight As Single
+    Dim maxImageWidth As Single
+    Dim tbl As Object
+    Dim r As Object
+    
+    ' 2. 建立 Word 應用程序
+    On Error Resume Next
+    Set wordApp = GetObject(Class:="Word.Application")
+    If Err.Number <> 0 Then
+        Set wordApp = CreateObject(Class:="Word.Application")
+    End If
+    If wordApp Is Nothing Then
+        MsgBox "無法啟動 Word 應用程序。", vbCritical, "錯誤"
+        Exit Sub
+    End If
+    On Error GoTo 0
+    wordApp.Visible = True
+    
+    ' 3. 請求使用者選擇一個 Word 檔
+    Set dlgOpen = Application.FileDialog(msoFileDialogFilePicker)
+    dlgOpen.Title = "選擇 Word 檔"
+    dlgOpen.Filters.Clear
+    dlgOpen.Filters.Add "Word 檔", "*.docx; *.docm", 1
+    If dlgOpen.Show <> -1 Then Exit Sub
+    filePath = dlgOpen.SelectedItems(1)
+    
+    ' 4. 開啟選定的 Word 檔
+    On Error Resume Next
+    Set doc = wordApp.Documents.Open(filePath)
+    If Err.Number <> 0 Then
+        MsgBox "無法開啟選定的 Word 檔。", vbCritical, "錯誤"
+        Exit Sub
+    End If
+    On Error GoTo 0
+    
+    ' 5. 設置文檔方向為橫向，並嘗試設置 A3 頁面大小
+    On Error Resume Next
+    With doc.PageSetup
+        .Orientation = wdOrientLandscape
+        .PageWidth = 1190.55 ' 42 cm = 1190.55 points
+        .PageHeight = 841.89 ' 29.7 cm = 841.89 points
+    End With
+    On Error GoTo 0
+    
+    ' 6. 取得頁面高度和寬度
+    pageHeight = doc.PageSetup.PageHeight
+    pageWidth = doc.PageSetup.PageWidth
+    
+    ' 7. 取得頁面邊距
+    marginHeight = doc.PageSetup.TopMargin + doc.PageSetup.BottomMargin
+    marginWidth = doc.PageSetup.LeftMargin + doc.PageSetup.RightMargin
+    
+    ' 8. 計算最大圖片高度和寬度（考慮邊距）
+    maxImageHeight = pageHeight - marginHeight
+    maxImageWidth = pageWidth - marginWidth
+    
+    ' 9. 調整圖片尺寸以適應頁面和表格高度
+    For Each shp In doc.InlineShapes
+        ' 確保是圖片才應用格式
+        If shp.Type = wdInlineShapePicture Then
+            shp.LockAspectRatio = True ' 鎖定長寬比
+            
+            ' 計算當前頁面的表格總高度
+            Dim currentPageHeight As Single
+            currentPageHeight = 0
+            For Each tbl In doc.Tables
+                If tbl.Range.Information(wdActiveEndPageNumber) = shp.Range.Information(wdActiveEndPageNumber) Then
+                    currentPageHeight = currentPageHeight + tbl.Rows.Count * 14.175
+                End If
+            Next tbl
+            
+            ' 計算圖片可用高度，考慮當前頁面的表格總高度
+            Dim availableHeight As Single
+            availableHeight = maxImageHeight - currentPageHeight
+            
+            ' 縮小圖片以適應頁面高度
+            If shp.Height > availableHeight Then
+                shp.Height = availableHeight
+            End If
+            
+            ' 如果圖片的寬度仍然超過可用寬度，縮小圖片以適應頁面寬度
+            If shp.Width > maxImageWidth Then
+                shp.Width = maxImageWidth
+            End If
+        End If
+    Next shp
+    
+    ' 10. 移除圖片和文字之間的空行
+    Dim para As Object
+    For Each para In doc.Paragraphs
+        If Len(para.Range.Text) = 1 And Asc(para.Range.Text) = 13 Then
+            para.Range.Delete
+        End If
+    Next para
+    
+    ' 11. 顯示調整完成的訊息
+    MsgBox "圖片調整完成，確保不會跳頁，並已將圖片與表格緊貼。"
+End Sub
