@@ -1,0 +1,95 @@
+Sub 調整圖片尺寸比例_1_1_58_Chatty()
+    ' 版本：1.1.58
+    ' 功能：選擇Word檔案並批次調整所有圖片尺寸比率
+    ' 日期：2025-03-13
+
+    ' 1. 定義變數
+    Dim wordApp As Object
+    Dim doc As Object
+    Dim shp As Object
+    Dim dlgOpen As fileDialog
+    Dim filePath As String
+    Dim scaleFactor As Single
+    Dim picCount As Integer
+    Debug.Print "變數已定義" ' 行5
+
+    ' 2. 建立 Word 應用程序
+    On Error Resume Next
+    Set wordApp = GetObject(Class:="Word.Application")
+    If Err.Number <> 0 Then
+        Set wordApp = CreateObject(Class:="Word.Application")
+    End If
+    If wordApp Is Nothing Then
+        MsgBox "無法啟動 Word 應用程序。", vbCritical, "錯誤"
+        Exit Sub
+    End If
+    On Error GoTo 0
+    wordApp.Visible = True
+    Debug.Print "Word 應用程序已建立並顯示" ' 行15
+
+    ' 3. 請求使用者選擇一個 Word 檔
+    Set dlgOpen = Application.fileDialog(msoFileDialogFilePicker)
+    dlgOpen.Title = "選擇 Word 檔"
+    dlgOpen.Filters.Clear
+    dlgOpen.Filters.Add "Word 檔", "*.docx; *.docm", 1
+    If dlgOpen.Show <> -1 Then Exit Sub
+    filePath = dlgOpen.selectedItems(1)
+    Debug.Print "使用者已選擇 Word 檔" ' 行25
+
+    ' 4. 開啟選定的 Word 檔
+    On Error Resume Next
+    Set doc = wordApp.Documents.Open(filePath)
+    If Err.Number <> 0 Then
+        MsgBox "無法開啟選定的 Word 檔。", vbCritical, "錯誤"
+        Exit Sub
+    End If
+    On Error GoTo 0
+    Debug.Print "Word 檔已開啟" ' 行35
+
+    ' 5. 跳出訊息框讓使用者選擇圖片尺寸的縮放比例
+    scaleFactor = Val(InputBox("請輸入圖片縮放比例 (例如: 0.5 表示縮小 50%)", "圖片縮放比例", "1"))
+    If Not IsNumeric(scaleFactor) Or scaleFactor <= 0 Then
+        MsgBox "無效的縮放比例。", vbCritical, "錯誤"
+        Exit Sub
+    End If
+    Debug.Print "使用者選擇的縮放比例: " & scaleFactor ' 行45
+
+    picCount = 0
+    ' 6. 遍歷所有 InlineShapes 並調整尺寸
+    For Each shp In doc.InlineShapes
+        On Error Resume Next
+        shp.ScaleHeight = shp.ScaleHeight * scaleFactor
+        shp.ScaleWidth = shp.ScaleWidth * scaleFactor
+        If Err.Number = 0 Then
+            picCount = picCount + 1
+        End If
+        Err.Clear
+        Debug.Print "調整 InlineShape 圖片尺寸比率: 高度=" & shp.ScaleHeight & ", 寬度=" & shp.ScaleWidth ' 行50
+    Next shp
+    
+    ' 7. 遍歷所有 Shapes 並調整尺寸
+    For Each shp In doc.Shapes
+        On Error Resume Next
+        shp.ScaleHeight = shp.ScaleHeight * scaleFactor
+        shp.ScaleWidth = shp.ScaleWidth * scaleFactor
+        If Err.Number = 0 Then
+            picCount = picCount + 1
+        End If
+        Err.Clear
+        Debug.Print "調整 Shape 圖片尺寸比率: 高度=" & shp.ScaleHeight & ", 寬度=" & shp.ScaleWidth ' 行55
+    Next shp
+
+    ' 8. 完成提示
+    If picCount > 0 Then
+        MsgBox "已完成調整 " & picCount & " 個圖片的尺寸！", vbInformation
+    Else
+        MsgBox "未找到可調整的圖片！", vbExclamation
+    End If
+    Debug.Print "調整完成提示已顯示" ' 行60
+
+    ' 9. 清理對象
+    Set shp = Nothing
+    Set doc = Nothing
+    Set wordApp = Nothing
+    Set dlgOpen = Nothing
+End Sub
