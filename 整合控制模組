@@ -1,0 +1,13 @@
+Sub Main()
+    ' 調用 Module6 中的 Sub
+    Module6.Sub6
+
+    ' 調用 Module2 中的 Sub
+    Module2.Sub2
+
+    ' 調用 Module1 中的 Sub
+    Module1.Sub1
+
+    ' 調用 Module7 中的 Sub
+    Module7.Sub7
+End Sub
