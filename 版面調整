@@ -1,0 +1,85 @@
+Sub 版面調整_1_0_6_Alex()
+    ' 版本：1.0.6
+    ' 功能：偵測圖片後的表格並將其移動至下一頁，包含表格後的所有內容
+    ' 日期：2025-03-14
+    
+    ' 1. 定義變數
+    Dim wordApp As Object
+    Dim doc As Object
+    Dim tbl As Object
+    Dim shp As Object
+    Dim dlgOpen As Object
+    Dim filePath As String
+    Dim rng As Object
+    Dim moveRange As Object
+    Debug.Print "變數已定義" ' 行5
+
+    ' 2. 建立 Word 應用程序
+    On Error Resume Next
+    Set wordApp = GetObject(Class:="Word.Application")
+    If Err.Number <> 0 Then
+        Set wordApp = CreateObject(Class:="Word.Application")
+    End If
+    If wordApp Is Nothing Then
+        MsgBox "無法啟動 Word 應用程序。", vbCritical, "錯誤"
+        Exit Sub
+    End If
+    On Error GoTo 0
+    wordApp.Visible = True
+    Debug.Print "Word 應用程序已建立並顯示" ' 行15
+
+    ' 3. 請求使用者選擇一個 Word 檔
+    Set dlgOpen = Application.FileDialog(msoFileDialogFilePicker)
+    dlgOpen.Title = "選擇 Word 檔"
+    dlgOpen.Filters.Clear
+    dlgOpen.Filters.Add "Word 檔", "*.docx; *.docm", 1
+    If dlgOpen.Show <> -1 Then Exit Sub
+    filePath = dlgOpen.SelectedItems(1)
+    Debug.Print "使用者已選擇 Word 檔" ' 行25
+
+    ' 4. 開啟選定的 Word 檔
+    On Error Resume Next
+    Set doc = wordApp.Documents.Open(filePath)
+    If Err.Number <> 0 Then
+        MsgBox "無法開啟選定的 Word 檔。", vbCritical, "錯誤"
+        Exit Sub
+    End If
+    On Error GoTo 0
+    Debug.Print "Word 檔已開啟" ' 行35
+
+    ' 5. 遍歷所有圖片並檢查後面是否有表格且在同一頁
+    For Each shp In doc.InlineShapes
+        Set rng = shp.Range.Next(Unit:=wdCharacter, Count:=1)
+        
+        ' 確保 rng 被正確設置
+        Do While Not rng Is Nothing And rng.Tables.Count = 0
+            Set rng = rng.Next(Unit:=wdCharacter, Count:=1)
+            If rng Is Nothing Then Exit Do
+        Loop
+
+        If Not rng Is Nothing Then
+            If rng.Tables.Count > 0 Then
+                If shp.Range.Information(wdActiveEndPageNumber) = rng.Tables(1).Range.Information(wdActiveEndPageNumber) Then
+                    ' 6. 移動圖片後的表格和其後的所有內容到下一頁
+                    Set moveRange = doc.Range(Start:=rng.Tables(1).Range.Start, End:=doc.Content.End)
+                    moveRange.Cut
+                    doc.Range(doc.Content.End - 1).InsertBreak Type:=wdPageBreak
+                    doc.Range(doc.Content.End - 1).Paste
+                    Debug.Print "圖片後的表格和其後的內容已移到下一頁" ' 行45
+                End If
+            End If
+        End If
+    Next shp
+    
+    ' 7. 完成提示
+    MsgBox "檢查並移動表格已完成！", vbInformation
+    Debug.Print "檢查並移動表格已完成" ' 行50
+
+    ' 8. 清理對象
+    Set tbl = Nothing
+    Set doc = Nothing
+    Set wordApp = Nothing
+    Set dlgOpen = Nothing
+    Set rng = Nothing
+    Set moveRange = Nothing
+End Sub
