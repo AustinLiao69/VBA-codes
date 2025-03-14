@@ -1,6 +1,6 @@
-Sub 版面調整_1_0_6_Alex()
-    ' 版本：1.0.6
-    ' 功能：偵測圖片後的表格並將其移動至下一頁，包含表格後的所有內容
+Sub 版面調整_1_1_0_Copilot()
+    ' 版本：1.1.0
+    ' 功能：偵測圖片後的2列6欄表格並將其整體移動至下一頁，包含表格後的所有內容
     ' 日期：2025-03-14
     
     ' 1. 定義變數
@@ -47,7 +47,7 @@ Sub 版面調整_1_0_6_Alex()
     On Error GoTo 0
     Debug.Print "Word 檔已開啟" ' 行35
 
-    ' 5. 遍歷所有圖片並檢查後面是否有表格且在同一頁
+    ' 5. 遍歷所有圖片並檢查後面是否有2列6欄的表格且在同一頁
     For Each shp In doc.InlineShapes
         Set rng = shp.Range.Next(Unit:=wdCharacter, Count:=1)
         
@@ -59,13 +59,16 @@ Sub 版面調整_1_0_6_Alex()
 
         If Not rng Is Nothing Then
             If rng.Tables.Count > 0 Then
-                If shp.Range.Information(wdActiveEndPageNumber) = rng.Tables(1).Range.Information(wdActiveEndPageNumber) Then
-                    ' 6. 移動圖片後的表格和其後的所有內容到下一頁
-                    Set moveRange = doc.Range(Start:=rng.Tables(1).Range.Start, End:=doc.Content.End)
-                    moveRange.Cut
-                    doc.Range(doc.Content.End - 1).InsertBreak Type:=wdPageBreak
-                    doc.Range(doc.Content.End - 1).Paste
-                    Debug.Print "圖片後的表格和其後的內容已移到下一頁" ' 行45
+                Set tbl = rng.Tables(1)
+                If tbl.Rows.Count = 2 And tbl.Columns.Count = 6 Then
+                    If shp.Range.Information(wdActiveEndPageNumber) = tbl.Range.Information(wdActiveEndPageNumber) Then
+                        ' 6. 移動2列6欄的表格和其後的所有內容到下一頁
+                        Set moveRange = doc.Range(Start:=tbl.Range.Start, End:=doc.Content.End)
+                        moveRange.Cut
+                        doc.Range(doc.Content.End - 1).InsertBreak Type:=wdPageBreak
+                        doc.Range(doc.Content.End - 1).Paste
+                        Debug.Print "圖片後的2列6欄表格和其後的內容已移到下一頁" ' 行45
+                    End If
                 End If
             End If
         End If
