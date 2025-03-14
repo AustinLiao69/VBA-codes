@@ -1,0 +1,84 @@
+Sub 插入測試項目_1_0_25_Copilot()
+    ' 定義變數
+    ' 1. 定義變數
+    Dim xlApp As Object
+    Dim xlWorkbook As Object
+    Dim xlWorksheet As Object
+    Dim wdApp As Object
+    Dim wdDoc As Object
+    Dim rng As Range
+    Dim i As Long
+    Dim rowCount As Long
+
+    ' 2. 讓使用者自行選擇Excel文件
+    Set xlApp = CreateObject("Excel.Application")
+    xlApp.Visible = False ' 確保Excel文件不會顯示出來
+    Dim filePath As Variant
+    filePath = Application.GetOpenFilename("Excel Files (*.xlsx), *.xlsx", , "選擇Excel文件")
+
+    If VarType(filePath) = vbBoolean And filePath = False Then
+        MsgBox "未選擇任何文件"
+        Exit Sub
+    End If
+
+    ' 3. 確保 filePath 是字符串類型
+    Set xlWorkbook = xlApp.Workbooks.Open(CStr(filePath))
+    Set xlWorksheet = xlWorkbook.Sheets(1)
+
+    ' 4. 打開Word應用程序並創建新文檔
+    Set wdApp = CreateObject("Word.Application")
+    wdApp.Visible = True
+    Set wdDoc = wdApp.Documents.Add
+    
+    ' 4.1 設置頁面方向為橫向
+    wdDoc.PageSetup.Orientation = wdOrientLandscape
+
+    ' 5. 獲取第6列的表頭及其後的行數
+    rowCount = xlWorksheet.Cells(xlWorksheet.Rows.Count, 1).End(-4162).Row ' xlUp = -4162
+
+    ' 調試信息
+    Debug.Print "文件路徑: " & filePath
+
+    ' 6. 循環插入表頭和每行數據
+    For i = 7 To rowCount
+        ' 6.1 將選擇範圍移動到文檔末尾
+        On Error Resume Next
+        wdApp.Selection.Collapse Direction:=wdCollapseEnd
+        If Err.Number <> 0 Then
+            Debug.Print "選擇文檔末尾時發生錯誤: " & Err.Description
+            MsgBox "選擇文檔末尾時發生錯誤: " & Err.Description
+            Exit Sub
+        End If
+        On Error GoTo 0
+
+        ' 6.2 複製表頭 (第6列)
+        Set rng = xlWorksheet.Range("A6:F6")
+        rng.Copy
+
+        ' 6.3 插入Word文檔
+        wdApp.Selection.PasteExcelTable False, False, False
+
+        ' 6.5 複製第i行
+        Set rng = xlWorksheet.Range("A" & i & ":F" & i)
+        rng.Copy
+
+        ' 6.6 插入Word文檔
+        wdApp.Selection.PasteExcelTable False, False, False
+
+        ' 6.7 插入空行以分隔
+        wdApp.Selection.TypeParagraph
+    Next i
+
+    ' 7. 清理
+    xlWorkbook.Close False
+    xlApp.Quit
+    Set xlApp = Nothing
+    Set xlWorkbook = Nothing
+    Set xlWorksheet = Nothing
+    Set wdDoc = Nothing
+    Set wdApp = Nothing
+    Set rng = Nothing
+
+    Debug.Print "完成插入操作"
+End Sub
+
