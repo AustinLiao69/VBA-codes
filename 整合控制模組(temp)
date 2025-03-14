@@ -1,14 +1,14 @@
 Sub 整合控制模組_1_0_0_Alex()
     ' 調用 Module6 中的 Sub
-    Module6.Sub 插入測試項目_1_2_6_Alex
+    Module6.Sub 插入測試項目_1_2_6_Alex()
 
     ' 調用 Module7 中的 Sub
-    Module7.Sub 插入對應資料夾的圖片_1_0_6_Copilot
+    Module7.Sub 插入對應資料夾的圖片_1_0_6_Copilot()
 
     ' 調用 Module1 中的 Sub
-    Module1.Sub 調整圖片尺寸比率_1_6_2_Alex
+    Module1.Sub 調整圖片尺寸比率_1_6_2_Alex()
 
     ' 調用 Module2 中的 Sub
-    Module2.Sub 版面調整_1_1_0_Copilot
+    Module2.Sub 版面調整_1_1_0_Copilot()
 
 End Sub
