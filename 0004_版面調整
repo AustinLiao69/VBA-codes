@@ -29,12 +29,12 @@ Sub 版面調整_1_1_0_Copilot()
     Debug.Print "Word 應用程序已建立並顯示" ' 行15
 
     ' 3. 請求使用者選擇一個 Word 檔
-    Set dlgOpen = Application.FileDialog(msoFileDialogFilePicker)
+    Set dlgOpen = Application.fileDialog(msoFileDialogFilePicker)
     dlgOpen.Title = "選擇 Word 檔"
     dlgOpen.Filters.Clear
     dlgOpen.Filters.Add "Word 檔", "*.docx; *.docm", 1
     If dlgOpen.Show <> -1 Then Exit Sub
-    filePath = dlgOpen.SelectedItems(1)
+    filePath = dlgOpen.selectedItems(1)
     Debug.Print "使用者已選擇 Word 檔" ' 行25
 
     ' 4. 開啟選定的 Word 檔
@@ -76,7 +76,7 @@ Sub 版面調整_1_1_0_Copilot()
     
     ' 7. 完成提示
     MsgBox "檢查並移動表格已完成！", vbInformation
-    Debug.Print "檢查並移動表格已完成" ' 行50
+    Debug.Print "版面調整完成" ' 行50
 
     ' 8. 清理對象
     Set tbl = Nothing
