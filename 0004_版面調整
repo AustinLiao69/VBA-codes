@@ -1,7 +1,7 @@
-Sub 版面調整_1_1_0_Copilot()
-    ' 版本：1.1.0
+Sub 版面調整_1_1_1_Copilot()
+    ' 版本：1.1.1
     ' 功能：偵測圖片後的2列6欄表格並將其整體移動至下一頁，包含表格後的所有內容
-    ' 日期：2025-03-14
+    ' 日期：2025-03-17
     
     ' 1. 定義變數
     Dim wordApp As Object
@@ -75,7 +75,7 @@ Sub 版面調整_1_1_0_Copilot()
     Next shp
     
     ' 7. 完成提示
-    MsgBox "檢查並移動表格已完成！", vbInformation
+    MsgBox "版面調整完成！", vbInformation
     Debug.Print "版面調整完成" ' 行50
 
     ' 8. 清理對象
@@ -86,3 +86,4 @@ Sub 版面調整_1_1_0_Copilot()
     Set rng = Nothing
     Set moveRange = Nothing
 End Sub
+
