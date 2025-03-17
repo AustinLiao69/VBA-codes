@@ -1,0 +1,83 @@
+Sub 第一步合併報表()
+    Dim fileDialog As fileDialog
+    Dim selectedFiles As Collection
+    Dim mergedWorkbook1 As Workbook, mergedWorkbook2 As Workbook, currentWorkbook As Workbook
+    Dim dataSheet As Worksheet, rngData As Range
+    Dim totalRows1 As Long, totalRows2 As Long, lastRow As Long, outputPath As String
+    Dim totalPointsNonElectronic As Double
+    Dim filePath As Variant, smsContentLong As String, smsContentShort As String
+    Dim name As String, points As Double, isElectronic As Boolean
+    Dim i As Long
+    Dim resultsSheet As Worksheet
+
+    ' 讓使用者選擇要合併的檔案
+    Set fileDialog = Application.fileDialog(msoFileDialogFilePicker)
+    fileDialog.AllowMultiSelect = True
+    fileDialog.Title = "選擇要合併的 Excel 檔案"
+    fileDialog.Filters.Clear
+    fileDialog.Filters.Add "Excel 檔案", "*.xls; *.xlsx"
+
+    If fileDialog.Show = False Then
+        MsgBox "未選擇檔案", vbInformation
+        Exit Sub
+    End If
+
+    ' 儲存選擇的檔案路徑
+    Set selectedFiles = New Collection
+    For Each filePath In fileDialog.SelectedItems
+        selectedFiles.Add filePath
+    Next filePath
+
+    ' 建立合併的工作簿
+    Set mergedWorkbook1 = Application.Workbooks.Add
+    mergedWorkbook1.Sheets(1).name = "MergedData"
+    Set mergedWorkbook2 = Application.Workbooks.Add
+    mergedWorkbook2.Sheets(1).name = "MergedData2"
+
+    ' 初始化行數計數器
+    totalRows1 = 1 ' 第一個工作簿的行數計數器
+    totalRows2 = 1 ' 第二個工作簿的行數計數器
+    
+    For Each filePath In selectedFiles
+        On Error Resume Next
+        Set currentWorkbook = Workbooks.Open(filePath)
+        If Err.Number <> 0 Then
+            MsgBox "無法開啟檔案：" & filePath & vbCrLf & "錯誤信息：" & Err.Description, vbCritical
+            On Error GoTo 0
+            Exit Sub
+        End If
+        
+        On Error GoTo 0
+        
+        ' 遍歷每個工作表
+        For Each dataSheet In currentWorkbook.Sheets
+            
+            lastRow = dataSheet.Cells(dataSheet.Rows.Count, 1).End(xlUp).Row
+            
+            If lastRow > 1 Then ' 確保工作表有資料
+                ' 複製有效範圍（假設從第 1 列到最後一列）
+                Set rngData = dataSheet.Range("A1").CurrentRegion
+                
+                ' 檢查是否超過 100 萬筆限制
+                If totalRows1 + rngData.Rows.Count - 1 <= 1000000 Then
+                    ' 複製到第一個合併工作簿中
+                    rngData.Copy Destination:=mergedWorkbook1.Sheets(1).Cells(totalRows1, 1)
+                    totalRows1 = totalRows1 + rngData.Rows.Count ' 更新第一個工作簿的行數計數器
+                    
+                ElseIf totalRows2 + rngData.Rows.Count - 1 <= 1000000 Then
+                    ' 複製到第二個合併工作簿中，並更新行數以防止溢出限制
+                    rngData.Copy Destination:=mergedWorkbook2.Sheets(1).Cells(totalRows2, 1)
+                    totalRows2 = totalRows2 + rngData.Rows.Count ' 更新第二個工作簿的行數計數器
+                    
+                Else
+                    MsgBox "資料量超過限制，無法處理更多資料。", vbCritical
+                    Exit Sub
+                End If
+                
+            End If
+        Next dataSheet
+        
+        currentWorkbook.Close SaveChanges:=False
+    Next filePath
+
+End Sub
