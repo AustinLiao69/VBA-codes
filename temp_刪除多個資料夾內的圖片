@@ -1,0 +1,53 @@
+Sub 刪除多個資料夾內的圖片_1_0_1_Alex()
+    ' 1. 定義變數
+    Dim folderPaths As Variant
+    Dim folderPath As String
+    Dim fso As Object
+    Dim folder As Object
+    Dim file As Object
+    
+    Debug.Print "開始選擇資料夾"
+    
+    ' 2. 提示用戶選擇多個資料夾
+    folderPaths = Application.GetOpenFilename("All Files,*.*", MultiSelect:=True, Title:="Select Folders")
+    
+    ' 3. 檢查用戶是否取消了資料夾選擇
+    If TypeName(folderPaths) = "Boolean" Then
+        Debug.Print "用戶取消選擇資料夾"
+        Exit Sub
+    End If
+    
+    ' 4. 初始化FileSystemObject
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Debug.Print "初始化FileSystemObject完成"
+    
+    ' 5. 遍歷每個選定的資料夾
+    For Each folderPath In folderPaths
+        ' 6. 獲取資料夾對象
+        Set folder = fso.GetFolder(folderPath)
+        Debug.Print "處理資料夾: " & folderPath
+        
+        ' 7. 遍歷資料夾中的每個文件
+        For Each file In folder.Files
+            ' 8. 檢查文件是否為圖片
+            If LCase(Right(file.Name, 4)) = ".jpg" Or _
+               LCase(Right(file.Name, 4)) = ".png" Or _
+               LCase(Right(file.Name, 4)) = ".gif" Or _
+               LCase(Right(file.Name, 5)) = ".jpeg" Then
+                ' 9. 刪除圖片文件
+                Debug.Print "刪除圖片: " & file.Path
+                file.Delete True
+            End If
+        Next file
+    Next folderPath
+    
+    ' 10. 清理
+    Set file = Nothing
+    Set folder = Nothing
+    Set fso = Nothing
+    Debug.Print "清理完成"
+    
+    ' 11. 通知用戶
+    MsgBox "所有選定資料夾中的圖片已被刪除。", vbInformation
+    Debug.Print "所有選定資料夾中的圖片已被刪除。"
+End Sub
