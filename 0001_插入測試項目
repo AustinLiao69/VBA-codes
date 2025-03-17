@@ -1,5 +1,4 @@
-Sub 插入測試項目_1_0_25_Copilot()
-    ' 定義變數
+Sub 插入測試項目_1_2_7_Alex()
     ' 1. 定義變數
     Dim xlApp As Object
     Dim xlWorkbook As Object
@@ -32,6 +31,9 @@ Sub 插入測試項目_1_0_25_Copilot()
     
     ' 4.1 設置頁面方向為橫向
     wdDoc.PageSetup.Orientation = wdOrientLandscape
+    
+    ' 4.2 設置頁面大小為A3
+    wdDoc.PageSetup.PaperSize = wdPaperA3
 
     ' 5. 獲取第6列的表頭及其後的行數
     rowCount = xlWorksheet.Cells(xlWorksheet.Rows.Count, 1).End(-4162).Row ' xlUp = -4162
@@ -79,6 +81,8 @@ Sub 插入測試項目_1_0_25_Copilot()
     Set wdApp = Nothing
     Set rng = Nothing
 
+    ' 插入完成訊息框
+    MsgBox "插入資料完成!"
+
     Debug.Print "完成插入操作"
 End Sub
-
