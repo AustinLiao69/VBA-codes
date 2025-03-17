@@ -1,0 +1,44 @@
+Sub 第二步插入欄位並下移儲存格()
+    Dim wb As Workbook
+    Dim ws As Worksheet
+    Dim filePaths As Variant
+    Dim i As Integer
+
+    ' 顯示對話框讓用戶選擇多個工作簿
+    filePaths = Application.GetOpenFilename("Excel Files (*.xls; *.xlsx), *.xls; *.xlsx", , "選擇工作簿", , True)
+
+    ' 檢查用戶是否選擇了文件
+    If IsArray(filePaths) Then
+        For i = LBound(filePaths) To UBound(filePaths)
+            ' 打開選擇的工作簿
+            Set wb = Workbooks.Open(filePaths(i))
+            
+    Worksheets(1).Rows(1).Insert Shift:=xlShiftDown ' 插入並下移儲存格
+ 
+            ' 假設在第一個工作表中插入行
+            Set ws = wb.Sheets(1) ' 或者可以指定具體的工作表名稱
+           
+
+            ' 填入指定值
+        ws.Cells(1, 1).Value = "發送序號" ' A欄
+        ws.Cells(1, 2).Value = "三竹序號" ' B欄
+        ws.Cells(1, 3).Value = "部門" ' C欄
+        ws.Cells(1, 4).Value = "發送者" ' D欄
+        ws.Cells(1, 5).Value = "預約時間" ' E欄
+        ws.Cells(1, 6).Value = "狀態時間" ' F欄
+        ws.Cells(1, 7).Value = "簡訊狀態" ' G欄
+        ws.Cells(1, 8).Value = "批次名稱" ' H欄
+        ws.Cells(1, 9).Value = "報表名稱" ' I欄
+        ws.Cells(1, 10).Value = "行動電話" ' J欄
+        ws.Cells(1, 11).Value = "簡訊類型" ' K欄
+        ws.Cells(1, 12).Value = "點數" ' L欄
+        ws.Cells(1, 13).Value = "字數" ' M欄
+        ws.Cells(1, 14).Value = "簡訊內容" ' N欄
+
+            ' 保存並關閉工作簿
+            wb.Save
+        Next i
+    Else
+        MsgBox "未選擇任何工作簿。"
+    End If
+End Sub
