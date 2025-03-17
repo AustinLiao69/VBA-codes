@@ -1,4 +1,4 @@
-Sub 調整圖片縮放比率_1_6_2_Alex()
+Sub 調整圖片尺寸比率_1_6_2_Alex()
     ' 版本：1.6.2
     ' 功能：選擇Word檔案並批次調整所有圖片尺寸比率
     ' 日期：2025-03-14
@@ -31,7 +31,7 @@ Sub 調整圖片縮放比率_1_6_2_Alex()
     Set dlgOpen = Application.fileDialog(msoFileDialogFilePicker)
     dlgOpen.Title = "選擇 Word 檔"
     dlgOpen.Filters.Clear
-    dlgOpen.filters.add "Word 檔", "*.docx; *.docm", 1
+    dlgOpen.Filters.Add "Word 檔", "*.docx; *.docm", 1
     If dlgOpen.Show <> -1 Then Exit Sub
     filePath = dlgOpen.selectedItems(1)
     Debug.Print "使用者已選擇 Word 檔" ' 行25
@@ -47,7 +47,7 @@ Sub 調整圖片縮放比率_1_6_2_Alex()
     Debug.Print "Word 檔已開啟" ' 行35
 
     ' 5. 跳出訊息框讓使用者選擇圖片尺寸的縮放比例
-    scaleFactor = Val(InputBox("請輸入圖片縮放比例 (例如: 0.5 表示縮小 50%)", "圖片縮放比例", "1"))
+    scaleFactor = Val(InputBox("請輸入圖片縮放比例 (例如: 0.5 表示為原圖尺寸 50%)", "圖片縮放比例", "1"))
     If Not IsNumeric(scaleFactor) Or scaleFactor <= 0 Then
         MsgBox "無效的縮放比例。", vbCritical, "錯誤"
         Exit Sub
