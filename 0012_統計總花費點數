@@ -1,0 +1,39 @@
+Sub 第四步統計總花費點數()
+
+  Dim filePaths As Variant
+  Dim i As Long
+  Dim wb As Workbook, newWb As Workbook
+  Dim ws As Worksheet, newWs As Worksheet
+  Dim sum As Double
+
+  ' 讓使用者選擇 Excel 檔案
+  filePaths = Application.GetOpenFilename( _
+    fileFilter:="Excel Files (*.xls*), *.xls*", _
+    MultiSelect:=True)
+
+  ' 建立新的活頁簿
+  Set newWb = Workbooks.Add
+  Set newWs = newWb.Sheets(1)
+
+  ' 設定欄位標題
+  newWs.Cells(1, 1).Value = "總花費點數"
+
+  ' 逐個開啟選擇的 Excel 檔案
+  For i = 1 To UBound(filePaths)
+
+    ' 開啟 Excel 檔案
+    Set wb = Workbooks.Open(filePaths(i))
+    Set ws = wb.Sheets(1) ' 假設資料在第一個工作表
+
+    ' 計算 L 欄的總和
+    sum = Application.WorksheetFunction.sum(ws.Columns("L"))
+
+    ' 將總和寫入新的活頁簿
+    newWs.Cells(i + 1, 1).Value = sum
+
+    ' 關閉已開啟的 Excel 檔案
+    wb.Close SaveChanges:=False
+
+  Next i
+
+End Sub
