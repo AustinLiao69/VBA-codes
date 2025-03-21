@@ -1,4 +1,4 @@
-Sub 插入測試項目_1_2_7_Alex()
+Sub 插入測試項目_1_2_9_Alex()
     ' 1. 定義變數
     Dim xlApp As Object
     Dim xlWorkbook As Object
@@ -9,7 +9,10 @@ Sub 插入測試項目_1_2_7_Alex()
     Dim i As Long
     Dim rowCount As Long
 
-    ' 2. 讓使用者自行選擇Excel文件
+    ' 2. 顯示訊息框
+    MsgBox "請選取Excel檔案!", vbOKOnly, "提示"
+
+    ' 3. 讓使用者自行選擇Excel文件
     Set xlApp = CreateObject("Excel.Application")
     xlApp.Visible = False ' 確保Excel文件不會顯示出來
     Dim filePath As Variant
@@ -20,30 +23,30 @@ Sub 插入測試項目_1_2_7_Alex()
         Exit Sub
     End If
 
-    ' 3. 確保 filePath 是字符串類型
+    ' 4. 確保 filePath 是字符串類型
     Set xlWorkbook = xlApp.Workbooks.Open(CStr(filePath))
     Set xlWorksheet = xlWorkbook.Sheets(1)
 
-    ' 4. 打開Word應用程序並創建新文檔
+    ' 5. 打開Word應用程序並創建新文檔
     Set wdApp = CreateObject("Word.Application")
     wdApp.Visible = True
     Set wdDoc = wdApp.Documents.Add
     
-    ' 4.1 設置頁面方向為橫向
+    ' 5.1 設置頁面方向為橫向
     wdDoc.PageSetup.Orientation = wdOrientLandscape
     
-    ' 4.2 設置頁面大小為A3
+    ' 5.2 設置頁面大小為A3
     wdDoc.PageSetup.PaperSize = wdPaperA3
 
-    ' 5. 獲取第6列的表頭及其後的行數
+    ' 6. 獲取第6列的表頭及其後的行數
     rowCount = xlWorksheet.Cells(xlWorksheet.Rows.Count, 1).End(-4162).Row ' xlUp = -4162
 
     ' 調試信息
     Debug.Print "文件路徑: " & filePath
 
-    ' 6. 循環插入表頭和每行數據
+    ' 7. 循環插入表頭和每行數據
     For i = 7 To rowCount
-        ' 6.1 將選擇範圍移動到文檔末尾
+        ' 7.1 將選擇範圍移動到文檔末尾
         On Error Resume Next
         wdApp.Selection.Collapse Direction:=wdCollapseEnd
         If Err.Number <> 0 Then
@@ -53,25 +56,25 @@ Sub 插入測試項目_1_2_7_Alex()
         End If
         On Error GoTo 0
 
-        ' 6.2 複製表頭 (第6列)
+        ' 7.2 複製表頭 (第6列)
         Set rng = xlWorksheet.Range("A6:F6")
         rng.Copy
 
-        ' 6.3 插入Word文檔
+        ' 7.3 插入Word文檔
         wdApp.Selection.PasteExcelTable False, False, False
 
-        ' 6.5 複製第i行
+        ' 7.4 複製第i行
         Set rng = xlWorksheet.Range("A" & i & ":F" & i)
         rng.Copy
 
-        ' 6.6 插入Word文檔
+        ' 7.5 插入Word文檔
         wdApp.Selection.PasteExcelTable False, False, False
 
-        ' 6.7 插入空行以分隔
+        ' 7.6 插入空行以分隔
         wdApp.Selection.TypeParagraph
     Next i
 
-    ' 7. 清理
+    ' 8. 清理
     xlWorkbook.Close False
     xlApp.Quit
     Set xlApp = Nothing
