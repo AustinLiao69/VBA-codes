@@ -1,0 +1,80 @@
+Sub 今日工作()
+    Dim ws As Worksheet
+    Dim lastRow As Long, newRow As Long
+    Dim i As Long
+    Dim today As Date, yesterday As Date
+    Dim itemsFound As Boolean
+    Dim itemYear As Long, itemMonth As Long, itemDay As Long
+    Dim itemDate As Date
+    Dim originalStatus As String
+    
+    ' 設定今天和昨天的日期
+    today = Date
+    yesterday = today - 1
+    
+    ' 使用當前活動的工作表
+    Set ws = ActiveSheet
+    
+    ' 找出表格中的最後一行
+    lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+    
+    ' 初始化
+    itemsFound = False
+    
+    ' 掃描表格 (從第3行開始，因為標題在第2行)
+    For i = 3 To lastRow
+        ' 安全地獲取年、月、日值，強制轉換為數字以確保日期運算正確
+        If IsNumeric(ws.Cells(i, 1).Value) And IsNumeric(ws.Cells(i, 2).Value) And IsNumeric(ws.Cells(i, 3).Value) Then
+            itemYear = CLng(ws.Cells(i, 1).Value)
+            itemMonth = CLng(ws.Cells(i, 2).Value)
+            itemDay = CLng(ws.Cells(i, 3).Value)
+            
+            ' 嘗試創建日期
+            On Error Resume Next
+            itemDate = DateSerial(itemYear, itemMonth, itemDay)
+            
+            ' 檢查Err物件是否發生錯誤
+            If Err.Number = 0 Then
+                On Error GoTo 0 ' 關閉錯誤處理
+                
+                ' 獲取原始狀態
+                originalStatus = ws.Cells(i, 5).Value
+                
+                ' 檢查日期是否為昨天且狀態為Open、Pending或Noted
+                If itemDate = yesterday And _
+                   (originalStatus = "Open" Or originalStatus = "Pending" Or originalStatus = "Noted") Then
+                    
+                    ' 將項目狀態標記為Closed
+                    ws.Cells(i, 5).Value = "Closed"
+                    
+                    ' 複製此項目到新的一行，並更改日期為今天
+                    newRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row + 1
+                    
+                    ' 複製年、月、日設為今天
+                    ws.Cells(newRow, 1).Value = Year(today) ' 年
+                    ws.Cells(newRow, 2).Value = Month(today) ' 月
+                    ws.Cells(newRow, 3).Value = Day(today) ' 日
+                    
+                    ' 複製描述和其他欄位
+                    ws.Cells(newRow, 4).Value = ws.Cells(i, 4).Value ' Description
+                    ws.Cells(newRow, 5).Value = originalStatus ' Progress (保持原始狀態)
+                    ws.Cells(newRow, 6).Value = ws.Cells(i, 6).Value ' Description 2
+                    ws.Cells(newRow, 7).Value = ws.Cells(i, 7).Value ' Attachment 1
+                    ws.Cells(newRow, 8).Value = ws.Cells(i, 8).Value ' Attachment 2
+                    ws.Cells(newRow, 9).Value = ws.Cells(i, 9).Value ' Attachment 3
+                    
+                    itemsFound = True
+                End If
+            Else
+                Err.Clear ' 清除錯誤
+            End If
+            On Error GoTo 0 ' 確保錯誤處理已關閉
+        End If
+    Next i
+    
+    If itemsFound Then
+        MsgBox "昨天的Open、Pending和Noted項目已成功複製到今天，並將昨天的項目標記為Closed。", vbInformation
+    Else
+        MsgBox "昨天沒有Open、Pending或Noted的項目。", vbInformation
+    End If
+End Sub
